@@ -64,13 +64,31 @@
   (check-equal? (cps (+ 1 2)) 3)
   (check-equal? (cps (+ 1 (* 2 3))) 7))
 
-#;(cps (+ (let ([x 2]) (+ x 1)) 3))
-;; need cps-transformer struct property to treat racket primitive macros as literals
-
 (module+ test
   (check-equal? (cps (+ 1 (#%shift k (list
                                       (k 1) (k 2))))) '(2 3))
   (check-equal? (cps (+ 1 (#%shift k1 (+ 1 (#%shift k2 (k2 1)))))) 2))
+
+
+
+#;(cps (+ (let ([x 2]) (+ x 1)) 3))
+;; need cps-transformer struct property to treat racket primitive macros as literals
+;; or just define them in corresponding binding spaces
+
+(define-cps-expander (let stx)
+  (syntax-parse stx
+    [(_ ([var expr:cps-form]) body:cps-form)
+     (pack-parsed
+      #`(λ (k) (expr.parsed (λ (var)
+                       (body.parsed k)))))]))
+(module+
+    ;; now, it works correctly
+    (check-equal? (cps (+ (let ([x 2]) (+ x 1)) 3)) 6)
+    ;; and don't conflict with origin let
+    (check-equal? (let ([x 1][y 2]) (+ x y)) 3))
+     
+
+
 
 
 
