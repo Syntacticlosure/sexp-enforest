@@ -4,10 +4,10 @@
          "parsed.rkt")
 ;; enforest:
 (provide define-enforest)
-(define (call-operator-as-transformer op stx)
+(define (call-operator-as-transformer transformer-ref op stx)
   ;; check whether operator's transformer is bounded in space or global space
   ;; and then use apply the transformer
-  (define operator-proc (syntax-local-value op (λ () #f)))
+  (define operator-proc (transformer-ref (syntax-local-value op (λ () #f))))
   (and operator-proc
        (syntax-local-apply-transformer operator-proc
                                        op
@@ -22,14 +22,16 @@
               (~optional (~seq #:form-class form-class)
                          #:defaults ([form-class #'form-class]))
               (~optional (~seq #:in-space in-space)
-                         #:defaults ([in-space #'in-space]))) ...)
+                         #:defaults ([in-space #'in-space]))
+              (~optional (~seq #:transformer-ref transformer-ref)
+                         #:defaults ([transformer-ref #'values]))) ...)
      #`(begin
          (define (enforest stx)
            (syntax-parse stx
              [_:parsed stx]
              [(operator:id args (... ...))
               #:with implicit-call-form (in-space (datum->syntax #'operator '#%call))
-              (enforest (or (call-operator-as-transformer (in-space #'operator) stx) #'(implicit-call-form operator args (... ...))))]
+              (enforest (or (call-operator-as-transformer transformer-ref (in-space #'operator) stx) #'(implicit-call-form operator args (... ...))))]
              [(operator args (... ...))
               ;; call form case
               #:with implicit-call-form (in-space (datum->syntax #'operator '#%call))
@@ -38,6 +40,7 @@
               ;; operator is a identifier macro, or just literal
               #:with implicit-literal-form (in-space (datum->syntax #'operator '#%literal))
               (enforest (or (call-operator-as-transformer
+                             transformer-ref
                              (in-space #'operator) stx)
                             #'(implicit-literal-form operator)))]
              [lit

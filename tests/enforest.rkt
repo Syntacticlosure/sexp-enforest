@@ -47,7 +47,7 @@
      (pack-parsed
       #` (λ (c)
            (let ([k (λ (v) (c v))])
-                (expr.parsed (λ (v) v)))))]))
+             (expr.parsed (λ (v) v)))))]))
 
 
 (define-syntax (cps stx)
@@ -71,17 +71,18 @@
 ;; need cps-transformer struct property to treat racket primitive macros as literals
 ;; or just define them in corresponding binding spaces
 
-(define-cps-expander (let stx)
-  (syntax-parse stx
-    [(_ ([var expr:cps-form]) body:cps-form)
-     (pack-parsed
-      #`(λ (k) (expr.parsed (λ (var)
-                       (body.parsed k)))))]))
+
 (module+ test
-    ;; now, it works properly
-    (check-equal? (cps (+ (let ([x 2]) (+ x 1)) 3)) 6)
-    ;; and will not conflict with the origin let
-    (check-equal? (let ([x 1][y 2]) (+ x y)) 3))
+  (define-cps-expander (let stx)
+    (syntax-parse stx
+      [(_ ([var expr:cps-form]) body:cps-form)
+       (pack-parsed
+        #`(λ (k) (expr.parsed (λ (var)
+                                (body.parsed k)))))]))
+  ;; now, it works properly
+  (check-equal? (cps (+ (let ([x 2]) (+ x 1)) 3)) 6)
+  ;; and will not conflict with the origin let
+  (check-equal? (let ([x 1][y 2]) (+ x y)) 3))
      
 
 
