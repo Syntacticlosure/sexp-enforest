@@ -80,7 +80,7 @@
 (module+ test
     ;; now, it works properly
     (check-equal? (cps (+ (let ([x 2]) (+ x 1)) 3)) 6)
-    ;; and don't conflict with the origin let
+    ;; and will not conflict with the origin let
     (check-equal? (let ([x 1][y 2]) (+ x y)) 3))
      
 
