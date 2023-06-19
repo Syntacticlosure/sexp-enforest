@@ -4,12 +4,8 @@
 
 (begin-for-syntax
   (define in-cps-space (make-binding-space 'test/cps))
-  (define in-cps-generate-space (make-binding-space 'test/cps/generate))
-  (define in-type-space (make-binding-space 'test/typed))
   (define-enforest #:form-class cps-form
-    #:in-space in-cps-space)
-  (define-enforest #:form-class type-form
-    #:in-space in-type-space))
+    #:in-space in-cps-space))
 
 (define-syntax (define-cps-expander stx)
   (syntax-parse stx
@@ -81,7 +77,7 @@
      (pack-parsed
       #`(λ (k) (expr.parsed (λ (var)
                        (body.parsed k)))))]))
-(module+
+(module+ test
     ;; now, it works correctly
     (check-equal? (cps (+ (let ([x 2]) (+ x 1)) 3)) 6)
     ;; and don't conflict with origin let
