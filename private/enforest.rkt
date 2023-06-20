@@ -15,6 +15,8 @@
                                        #f
                                        stx)))
 
+
+
 (define-syntax (define-enforest stx)
   (syntax-parse stx
     [(_ (~alt (~optional (~seq #:enforest enforest)
@@ -26,32 +28,26 @@
               (~optional (~seq #:transformer-ref transformer-ref)
                          #:defaults ([transformer-ref #'values]))) ...)
      #`(begin
+         (define (call-implicit-form op-sym ctx stx)
+           (define implicit-id (in-space (datum->syntax ctx op-sym)))
+           (define result (call-operator-as-transformer transformer-ref implicit-id #`(implicit-id #,@stx)))
+           (unless result (raise-syntax-error 'enforest (format "~a transformer is unbound." op-sym) (syntax->datum stx)))
+           result)
          (define (enforest stx)
            (syntax-parse stx
              [_:parsed stx]
-             [(operator:id args (... ...))
-              #:with implicit-call-form (in-space (datum->syntax #'operator '#%call))
-              (enforest (or (call-operator-as-transformer transformer-ref (in-space #'operator) stx) #'(implicit-call-form operator args (... ...))))]
              [(operator args (... ...))
-              ;; call form case
-              #:with implicit-call-form (in-space (datum->syntax #'operator '#%call))
-              (enforest #'(implicit-call-form operator args (... ...)))]
-             [operator:id
+              (enforest (or (and (identifier? #'operator)
+                                 (call-operator-as-transformer transformer-ref (in-space #'operator) stx))
+                            (call-implicit-form '#%call #'operator #'(operator args (... ...)))))]
+             [operator
               ;; operator is a identifier macro, or just literal
-              #:with implicit-literal-form (in-space (datum->syntax #'operator '#%literal))
-              (enforest (or (call-operator-as-transformer
-                             transformer-ref
-                             (in-space #'operator) stx)
-                            #'(implicit-literal-form operator)))]
-             [lit
-              ;; literal form case
-              #:with implicit-literal-form (in-space (datum->syntax #'lit '#%literal))
-              (enforest #'(implicit-literal-form lit))]))
+              (enforest (or (and (identifier? #'operator)
+                                 (call-operator-as-transformer
+                                  transformer-ref
+                                  (in-space #'operator) stx))
+                            (call-implicit-form '#%literal #'operator #'(operator))))]))
          (define-syntax-class form-class
            (pattern form
              #:with parsed (unpack-parsed (enforest #'form)))))]))
             
-
-                 
-     
-
