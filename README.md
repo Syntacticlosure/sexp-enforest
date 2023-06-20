@@ -8,4 +8,4 @@ What's the difference with tranditional racket extensible macros(match,require,p
 3. parsed structures to represent internal format and avoid further expansion
 4. automatically capture the implicit forms
 
-a little demo: tests/enforest.rkt
+a little demo: tests/automatic-cps.rkt
