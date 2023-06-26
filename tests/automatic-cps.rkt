@@ -44,6 +44,7 @@
 (define-cps-expander (#%shift stx)
   (syntax-parse stx
     [(_ k:id expr:cps-form)
+     
      (pack-parsed
       #` (λ (c)
            (let ([k (λ (v) (c v))])
@@ -84,8 +85,6 @@
   ;; and will not conflict with the origin let
   (check-equal? (let ([x 1][y 2]) (+ x y)) 3))
      
-
-
 
 
 
