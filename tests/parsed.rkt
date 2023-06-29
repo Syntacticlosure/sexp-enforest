@@ -1,5 +1,5 @@
 #lang racket
-(require (for-syntax "../private/parsed.rkt"))
+(require "../private/parsed.rkt")
 (require (for-syntax syntax/parse) rackunit)
 
 (module+ test

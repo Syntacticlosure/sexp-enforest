@@ -1,5 +1,5 @@
 #lang racket
-(require "../meta.rkt" (for-syntax syntax/parse)
+(require "../main.rkt" (for-syntax syntax/parse)
          rackunit)
 
 (begin-for-syntax
