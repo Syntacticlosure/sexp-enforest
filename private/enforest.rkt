@@ -28,8 +28,7 @@
                            #:defaults ([form-class #'form-class]))
                 (~optional (~seq #:in-space in-space)
                            #:defaults ([in-space #'values]))
-                (~optional (~seq #:transformer-ref transformer-ref)
-                           #:defaults ([transformer-ref #'values]))) ...)
+                (~optional (~seq #:transformer-ref transformer-ref))) ...)
        #`(begin
            (define (call-implicit-form op-sym ctx stx)
              (define implicit-id (in-space (datum->syntax ctx op-sym)))
@@ -40,19 +39,18 @@
              (syntax-parse stx
                [_:parsed stx]
                [(operator args (... ...))
-                (enforest (or (and (identifier? #'operator)
-                                   (syntax-local-value (in-space #'operator) (λ () #f))
-                                   (or (call-operator-as-transformer transformer-ref (in-space #'operator) stx)
-                                       (call-implicit-form '#%literal #'operator #`(#,stx))))
-                              (call-implicit-form '#%call #'operator #'(operator args (... ...)))))]
+                (or (and (identifier? #'operator)
+                         (call-operator-as-transformer transformer-ref (in-space #'operator) stx))
+                    (call-implicit-form '#%call #'operator #'(operator args (... ...))))]
                [operator
                 ;; operator is a identifier macro, or just literal
-                (enforest (or (and (identifier? #'operator)
-                                   (call-operator-as-transformer
-                                    transformer-ref
-                                    (in-space #'operator) stx))
-                              (call-implicit-form '#%literal #'operator #'(operator))))]))
+                (or (and (identifier? #'operator)
+                         (call-operator-as-transformer
+                          transformer-ref
+                          (in-space #'operator) stx))
+                    (call-implicit-form '#%literal #'operator #'(operator)))]))
            (define-syntax-class form-class
              (pattern form
-               #:with parsed (unpack-parsed (enforest #'form)))))])))
+               #:with parsed (enforest #'form)
+               #:with unpacked (unpack-parsed #`parsed))))])))
             
